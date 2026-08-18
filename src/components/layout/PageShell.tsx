@@ -18,7 +18,7 @@ export default function PageShell({ title, description, icon: Icon, tag, actions
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6 }}
       transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-      className="flex flex-col min-h-screen"
+      className="flex flex-col flex-1 min-h-0"
     >
       <header className="border-b border-border px-6 py-5 flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-start gap-3">

@@ -1,7 +1,7 @@
 import { Suspense, lazy } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
-import Sidebar from '@/components/layout/Sidebar'
+import TopNav from '@/components/layout/TopNav'
 import Landing from '@/pages/Landing'
 
 const Lexer = lazy(() => import('@/pages/Lexer'))
@@ -15,9 +15,9 @@ export default function App() {
   const location = useLocation()
 
   return (
-    <div className="flex min-h-screen bg-bg">
-      <Sidebar />
-      <main className="flex-1 min-w-0">
+    <div className="flex flex-col min-h-screen bg-bg">
+      <TopNav />
+      <main className="flex-1 min-h-0 flex flex-col">
         <AnimatePresence mode="wait">
           <Suspense fallback={<div className="p-6 text-sm text-text-muted">Loading…</div>}>
             <Routes location={location} key={location.pathname}>
