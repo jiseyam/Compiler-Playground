@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, ExternalLink, Keyboard, Eye, Lightbulb } from 'lucide-react'
+import { ArrowRight, Keyboard, Eye, Lightbulb } from 'lucide-react'
 import { modules } from '@/lib/modules'
 
 const DEMO_TOKENS: { text: string; type: 'keyword' | 'identifier' | 'special' | 'operator' | 'number' }[] = [
@@ -233,16 +233,8 @@ export default function Landing() {
       </section>
 
       <footer className="border-t border-border">
-        <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-text-muted">
-          <span>Compiler Playground — learn compilers by watching them think.</span>
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 hover:text-text transition-colors duration-150"
-          >
-            <ExternalLink size={15} /> GitHub
-          </a>
+        <div className="max-w-6xl mx-auto px-6 py-8 text-center text-sm text-text-muted">
+          Compiler Playground — learn compilers by watching them think.
         </div>
       </footer>
     </div>

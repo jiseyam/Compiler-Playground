@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Menu, X, SquareTerminal, ExternalLink } from 'lucide-react'
+import { Menu, X, SquareTerminal } from 'lucide-react'
 import { modules } from '@/lib/modules'
 
 function Logo() {
@@ -101,15 +101,6 @@ export default function TopNav() {
         <DesktopLinks />
 
         <div className="flex items-center gap-1.5 shrink-0">
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noreferrer"
-            className="hidden sm:inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-text-muted hover:text-text hover:bg-surface-hover transition-colors duration-150"
-          >
-            <ExternalLink size={15} />
-            <span className="hidden lg:inline">GitHub</span>
-          </a>
           <button
             onClick={() => setOpen((v) => !v)}
             className="xl:hidden p-2 rounded-lg text-text-muted hover:text-text hover:bg-surface-hover transition-colors duration-150"
