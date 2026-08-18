@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import TopNav from '@/components/layout/TopNav'
 import Landing from '@/pages/Landing'
@@ -9,7 +9,6 @@ const FirstFollowLeading = lazy(() => import('@/pages/FirstFollowLeading'))
 const ExpressionValidator = lazy(() => import('@/pages/ExpressionValidator'))
 const Ll1Parser = lazy(() => import('@/pages/Ll1Parser'))
 const NfaToDfa = lazy(() => import('@/pages/NfaToDfa'))
-const About = lazy(() => import('@/pages/About'))
 
 export default function App() {
   const location = useLocation()
@@ -28,7 +27,7 @@ export default function App() {
               <Route path="/first-follow-leading" element={<FirstFollowLeading />} />
               <Route path="/ll1-parser" element={<Ll1Parser />} />
               <Route path="/nfa-to-dfa" element={<NfaToDfa />} />
-              <Route path="/about" element={<About />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
         </AnimatePresence>

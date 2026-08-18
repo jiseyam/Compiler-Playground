@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Menu, X, SquareTerminal, Info, ExternalLink } from 'lucide-react'
+import { Menu, X, SquareTerminal, ExternalLink } from 'lucide-react'
 import { modules } from '@/lib/modules'
 
 function Logo() {
@@ -17,10 +17,7 @@ function Logo() {
   )
 }
 
-const navEntries = [
-  ...modules.map((m) => ({ path: m.path, label: m.navLabel, icon: m.icon })),
-  { path: '/about', label: 'About', icon: Info },
-]
+const navEntries = modules.map((m) => ({ path: m.path, label: m.navLabel, icon: m.icon }))
 
 function DesktopLinks() {
   const location = useLocation()
