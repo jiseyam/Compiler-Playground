@@ -24,7 +24,7 @@ export default function ExpressionValidator({ defaultTab = 'expression' }: { def
       title="Expression & Pattern Validator"
       description="Two related checks: balanced math expressions, and step-by-step regex-style pattern matching."
       icon={tab === 'expression' ? Sigma : Regex}
-      lab="Lab II"
+      tag={tab === 'expression' ? 'Syntax Validation' : 'Finite Automata'}
       actions={<Tabs tabs={TABS} active={tab} onChange={setTab} />}
     >
       {tab === 'expression' ? <ExpressionTab /> : <PatternTab />}
@@ -62,7 +62,7 @@ function ExpressionTab() {
           <div className="flex justify-end">
             <ExportReportButton
               moduleTitle="Expression Validator"
-              lab="Lab II"
+              category="Syntax Validation"
               problemStatement="Validate a math expression for balanced parentheses and correct operator placement, pinpointing the exact character where validation fails."
               inputGiven={expr}
               discussionDefault={result.message}
@@ -134,7 +134,7 @@ function PatternTab() {
           <div className="flex justify-end mb-4">
             <ExportReportButton
               moduleTitle="Pattern Recognizer"
-              lab="Lab II"
+              category="Finite Automata"
               problemStatement={`Match an input string against the pattern "${pattern.label}" step by step, showing the automaton state and consumed character at each step, ending in accept or reject.`}
               inputGiven={`Pattern: ${pattern.label}\nInput: ${input}`}
               discussionDefault={result.reason}

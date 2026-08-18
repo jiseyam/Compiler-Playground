@@ -1,6 +1,7 @@
-import type { ButtonHTMLAttributes } from 'react'
+import { motion } from 'framer-motion'
+import type { ComponentProps } from 'react'
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends ComponentProps<typeof motion.button> {
   variant?: 'primary' | 'secondary' | 'ghost'
   size?: 'sm' | 'md'
 }
@@ -16,10 +17,14 @@ const sizes = {
   md: 'px-4 py-2 text-sm',
 }
 
-export default function Button({ variant = 'primary', size = 'md', className = '', ...props }: ButtonProps) {
+export default function Button({ variant = 'primary', size = 'md', className = '', disabled, ...props }: ButtonProps) {
   return (
-    <button
-      className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
+    <motion.button
+      whileHover={disabled ? undefined : { scale: 1.03 }}
+      whileTap={disabled ? undefined : { scale: 0.97 }}
+      transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+      disabled={disabled}
+      className={`inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
       {...props}
     />
   )

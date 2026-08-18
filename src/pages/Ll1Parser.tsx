@@ -78,11 +78,11 @@ export default function Ll1Parser() {
       title="LL(1) Parser"
       description="Build a predictive parsing table from FIRST/FOLLOW, then step through a table-driven parse."
       icon={Table2}
-      lab="Lab IV–V"
+      tag="Predictive Parsing"
       actions={
         <ExportReportButton
           moduleTitle="LL(1) Parser"
-          lab="Lab IV-V"
+          category="Predictive Parsing"
           problemStatement="Construct an LL(1) predictive parsing table from a grammar's FIRST/FOLLOW sets, detect conflicts, and simulate a stack-driven parse of an input string."
           inputGiven={`Grammar:\n${source}\n\nInput: ${input}`}
           discussionDefault={

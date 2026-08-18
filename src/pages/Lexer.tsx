@@ -10,7 +10,7 @@ import TokenChip from '@/components/viz/TokenChip'
 import { tokenize, summarize } from '@/lib/lexer'
 import { useDebounce } from '@/hooks/useDebounce'
 
-const SAMPLE = `// Lab I sample program
+const SAMPLE = `// Sample program
 int main() {
   int count = 0;
   float rate = 3.14;
@@ -48,11 +48,11 @@ export default function Lexer() {
       title="Lexical Analyzer"
       description="Type code on the left. Every token gets classified and colored on the right, live."
       icon={ScanText}
-      lab="Lab I"
+      tag="Lexical Analysis"
       actions={
         <ExportReportButton
           moduleTitle="Lexical Analyzer"
-          lab="Lab I"
+          category="Lexical Analysis"
           problemStatement="Write a lexical analyzer that scans source code and classifies each token into keywords, identifiers, constants, operators, and special symbols, stripping comments in the process."
           inputGiven={source}
           discussionDefault={`The analyzer found ${codeTokens.length} tokens (${summary.keywords.length} keywords, ${summary.identifiers.length} identifiers, ${summary.numbers.length + summary.strings.length} constants, ${summary.operators.length} operators, ${summary.specials.length} special symbols) and stripped ${commentTokens.length} comment block(s).`}

@@ -6,33 +6,38 @@ interface PageShellProps {
   title: string
   description?: string
   icon?: LucideIcon
-  lab?: string
+  tag?: string
   actions?: ReactNode
   children: ReactNode
 }
 
-export default function PageShell({ title, description, icon: Icon, lab, actions, children }: PageShellProps) {
+export default function PageShell({ title, description, icon: Icon, tag, actions, children }: PageShellProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.2 }}
+      exit={{ opacity: 0, y: -6 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
       className="flex flex-col min-h-screen"
     >
       <header className="border-b border-border px-6 py-5 flex items-start justify-between gap-4 flex-wrap">
         <div className="flex items-start gap-3">
           {Icon && (
-            <div className="mt-0.5 flex items-center justify-center w-9 h-9 rounded-lg bg-accent-soft text-accent shrink-0">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-0.5 flex items-center justify-center w-9 h-9 rounded-lg bg-accent-soft text-accent shrink-0"
+            >
               <Icon size={18} strokeWidth={1.75} />
-            </div>
+            </motion.div>
           )}
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-heading font-semibold text-text">{title}</h1>
-              {lab && (
+              {tag && (
                 <span className="text-[11px] font-medium text-teal bg-teal-soft border border-teal/30 rounded-full px-2 py-0.5">
-                  {lab}
+                  {tag}
                 </span>
               )}
             </div>

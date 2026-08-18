@@ -13,7 +13,7 @@ function loadImageSize(dataUrl: string): Promise<{ width: number; height: number
 
 interface ExportReportButtonProps {
   moduleTitle: string
-  lab: string
+  category: string
   problemStatement: string
   inputGiven: string
   discussionDefault: string
@@ -22,7 +22,7 @@ interface ExportReportButtonProps {
 
 export default function ExportReportButton({
   moduleTitle,
-  lab,
+  category,
   problemStatement,
   inputGiven,
   discussionDefault,
@@ -78,7 +78,7 @@ export default function ExportReportButton({
       y += 18
       doc.setFontSize(10)
       doc.setTextColor(130, 130, 145)
-      doc.text(`CSE 310 — Compiler Design · ${lab}`, margin, y)
+      doc.text(`Compiler Playground · ${category}`, margin, y)
       y += 30
 
       section('Problem Statement', problemStatement)
@@ -113,7 +113,7 @@ export default function ExportReportButton({
       }
       section('Discussion', discussion)
 
-      const filename = `${moduleTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-lab-report.pdf`
+      const filename = `${moduleTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-report.pdf`
       doc.save(filename)
       setOpen(false)
     } catch {
@@ -135,7 +135,7 @@ export default function ExportReportButton({
           <div className="absolute inset-0 bg-black/60" onClick={() => !exporting && setOpen(false)} />
           <div className="relative w-full max-w-lg rounded-2xl border border-border bg-surface p-5 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-heading font-semibold text-text">Export as lab report</h3>
+              <h3 className="font-heading font-semibold text-text">Export report</h3>
               <button
                 onClick={() => setOpen(false)}
                 disabled={exporting}

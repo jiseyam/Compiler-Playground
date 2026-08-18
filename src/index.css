@@ -31,6 +31,8 @@
 
   --animate-fade-in: fade-in 0.2s ease-out;
   --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
+  --animate-blob-a: blob-float-a 16s ease-in-out infinite;
+  --animate-blob-b: blob-float-b 20s ease-in-out infinite;
 
   @keyframes fade-in {
     from {
@@ -50,6 +52,29 @@
     }
     50% {
       opacity: 0.6;
+    }
+  }
+
+  @keyframes blob-float-a {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(4%, 6%) scale(1.08);
+    }
+    66% {
+      transform: translate(-3%, -4%) scale(0.96);
+    }
+  }
+
+  @keyframes blob-float-b {
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      transform: translate(-6%, 5%) scale(1.1);
     }
   }
 }

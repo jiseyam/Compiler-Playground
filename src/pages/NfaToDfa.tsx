@@ -41,11 +41,11 @@ export default function NfaToDfa() {
       title="NFA → DFA Converter"
       description="Define an NFA (epsilon transitions allowed), then watch subset construction build the equivalent DFA."
       icon={GitBranch}
-      lab="Lab VI"
+      tag="Automata Theory"
       actions={
         <ExportReportButton
           moduleTitle="NFA to DFA Converter"
-          lab="Lab VI"
+          category="Automata Theory"
           problemStatement="Convert a non-deterministic finite automaton (with epsilon transitions) into an equivalent deterministic finite automaton using the subset construction algorithm."
           inputGiven={`States: ${form.states}\nAlphabet: ${form.alphabet}\nStart: ${form.start}\nAccepting: ${form.accepting}\nTransitions:\n${form.transitions}`}
           discussionDefault={

@@ -41,11 +41,11 @@ export default function FirstFollowLeading() {
       title="FIRST / FOLLOW / LEADING Calculator"
       description="One production per line. Use | for alternatives and # (or ε) for epsilon."
       icon={Waypoints}
-      lab="Lab III"
+      tag="Grammar Analysis"
       actions={
         <ExportReportButton
           moduleTitle="FIRST FOLLOW LEADING Calculator"
-          lab="Lab III"
+          category="Grammar Analysis"
           problemStatement="Given a context-free grammar, compute the FIRST, FOLLOW, and LEADING sets for every non-terminal, showing the derivation step responsible for each addition."
           inputGiven={source}
           discussionDefault={
