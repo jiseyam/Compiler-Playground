@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-heading: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+
+  --color-bg: #0a0a0f;
+  --color-bg-alt: #0d0d14;
+  --color-surface: #14141c;
+  --color-surface-hover: #1a1a24;
+  --color-border: #232330;
+  --color-border-hover: #2f2f40;
+
+  --color-accent: #7c5cff;
+  --color-accent-hover: #8f72ff;
+  --color-accent-soft: #7c5cff26;
+
+  --color-teal: #4ce0d2;
+  --color-teal-soft: #4ce0d226;
+
+  --color-coral: #ff6b6b;
+  --color-coral-soft: #ff6b6b26;
+
+  --color-amber: #ffb454;
+  --color-blue: #5ea0ff;
+
+  --color-text: #ededf2;
+  --color-text-muted: #8a8a99;
+  --color-text-dim: #55555f;
+
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse-glow {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading);
+    color: var(--color-text);
+    letter-spacing: -0.02em;
+  }
+
+  code,
+  pre,
+  kbd {
+    font-family: var(--font-mono);
+  }
+
+  ::selection {
+    background: var(--color-accent-soft);
+    color: var(--color-text);
+  }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 999px;
+    border: 2px solid var(--color-bg);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-hover);
+  }
+}
+
+@layer utilities {
+  .bg-dot-grid {
+    background-image: radial-gradient(circle, #232330 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .glow-radial {
+    background: radial-gradient(
+      ellipse 80% 50% at 50% -10%,
+      var(--color-accent-soft),
+      transparent 70%
+    );
+  }
+}
