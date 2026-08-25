@@ -9,7 +9,7 @@ An interactive web app for learning core compiler design concepts (CSE 310) thro
 | Lexical Analyzer | `/lexer` | Lab I |
 | Pattern Recognizer | `/pattern-matcher` | Lab II |
 | Expression Validator | `/expression-validator` | Lab II |
-| FIRST / FOLLOW / LEADING Calculator | `/first-follow-leading` | Lab III |
+| FIRST / FOLLOW Calculator (with left recursion / left factoring elimination) | `/first-follow-leading` | Lab III |
 | LL(1) Parser (table + predictive parser simulator) | `/ll1-parser` | Lab IV–V |
 | NFA → DFA Converter | `/nfa-to-dfa` | Lab VI |
 

@@ -44,9 +44,9 @@ export const modules: ModuleMeta[] = [
   },
   {
     path: '/first-follow-leading',
-    title: 'FIRST / FOLLOW / LEADING',
+    title: 'FIRST / FOLLOW Calculator',
     navLabel: 'FIRST/FOLLOW',
-    description: 'Build FIRST, FOLLOW, and LEADING sets from a grammar with every derivation step shown.',
+    description: 'Eliminate left recursion and left factoring, then build FIRST and FOLLOW sets with every step shown.',
     tag: 'Grammar Analysis',
     icon: Waypoints,
   },

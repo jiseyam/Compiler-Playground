@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { parseGrammar, GrammarError } from '../grammar'
-import { computeFirst, computeFollow, computeLeading } from '../firstFollowLeading'
+import { computeFirst, computeFollow } from '../firstFollowLeading'
 
 const EXPR_GRAMMAR = `
 E -> T E'
@@ -59,20 +59,5 @@ describe('computeFollow', () => {
     expect(symbolsOf(follow, 'T')).toEqual(['$', ')', '+'])
     expect(symbolsOf(follow, "T'")).toEqual(['$', ')', '+'])
     expect(symbolsOf(follow, 'F')).toEqual(['$', ')', '*', '+'])
-  })
-})
-
-describe('computeLeading', () => {
-  const g = parseGrammar(`
-    E -> E + T | T
-    T -> T * F | F
-    F -> ( E ) | id
-  `)
-  const leading = computeLeading(g)
-
-  it('matches known LEADING sets for the left-recursive expression grammar', () => {
-    expect(symbolsOf(leading, 'F')).toEqual(['(', 'id'])
-    expect(symbolsOf(leading, 'T')).toEqual(['(', '*', 'id'])
-    expect(symbolsOf(leading, 'E')).toEqual(['(', '*', '+', 'id'])
   })
 })

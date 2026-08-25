@@ -142,48 +142,6 @@ export function computeFollow(grammar: Grammar, first: SymbolSetMap): SymbolSetM
   return toSymbolSetMap(raw, grammar.nonTerminals)
 }
 
-export function computeLeading(grammar: Grammar): SymbolSetMap {
-  const raw = new Map<string, Map<string, Set<string>>>()
-  let changed = true
-
-  while (changed) {
-    changed = false
-    for (const p of grammar.productions) {
-      const ruleStr = productionToString(p)
-      if (p.rhs.length === 1 && p.rhs[0] === EPSILON) continue
-
-      const first = p.rhs[0]
-      if (!isNonTerminal(grammar, first)) {
-        if (addSymbol(raw, p.lhs, first, `${ruleStr}: "${first}" is the first symbol and a terminal`)) changed = true
-      } else {
-        const leadingFirst = raw.get(first) ?? new Map()
-        for (const s of leadingFirst.keys()) {
-          if (addSymbol(raw, p.lhs, s, `${ruleStr}: LEADING(${first}) propagates since ${first} is the first symbol`)) {
-            changed = true
-          }
-        }
-        // Only the symbol immediately after a leading non-terminal can also be leading —
-        // a terminal already blocks any position after it from being reachable first.
-        const second = p.rhs[1]
-        if (second !== undefined && second !== EPSILON && !isNonTerminal(grammar, second)) {
-          if (
-            addSymbol(
-              raw,
-              p.lhs,
-              second,
-              `${ruleStr}: "${second}" immediately follows leading non-terminal "${first}"`,
-            )
-          ) {
-            changed = true
-          }
-        }
-      }
-    }
-  }
-
-  return toSymbolSetMap(raw, grammar.nonTerminals)
-}
-
 export function getProductionsFor(grammar: Grammar, lhs: string): Production[] {
   return grammar.byLhs.get(lhs) ?? []
 }
