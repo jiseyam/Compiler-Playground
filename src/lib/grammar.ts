@@ -132,3 +132,11 @@ export function isNonTerminal(grammar: Grammar, sym: string): boolean {
 export function productionToString(p: Production): string {
   return `${p.lhs} -> ${p.rhs.join(' ')}`
 }
+
+/** One entry per non-terminal, with all of its alternatives joined by " | " (e.g. "S' -> ; A S' | ε"). */
+export function productionsGroupedByLhs(grammar: Grammar): { lhs: string; text: string }[] {
+  return grammar.nonTerminals.map((lhs) => {
+    const alts = (grammar.byLhs.get(lhs) ?? []).map((p) => p.rhs.join(' '))
+    return { lhs, text: `${lhs} -> ${alts.join(' | ')}` }
+  })
+}

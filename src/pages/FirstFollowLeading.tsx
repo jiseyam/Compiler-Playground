@@ -7,7 +7,7 @@ import ErrorPanel from '@/components/ui/ErrorPanel'
 import ExportReportButton from '@/components/ui/ExportReportButton'
 import SetTable from '@/components/viz/SetTable'
 import TransformSteps from '@/components/viz/TransformSteps'
-import { parseGrammar, GrammarError, productionToString } from '@/lib/grammar'
+import { parseGrammar, GrammarError, productionsGroupedByLhs } from '@/lib/grammar'
 import { eliminateLeftRecursion, eliminateLeftFactoring } from '@/lib/grammarTransforms'
 import { computeFirst, computeFollow } from '@/lib/firstFollowLeading'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -110,14 +110,24 @@ export default function FirstFollowLeading() {
                   <h3 className="text-xs font-medium text-text-muted uppercase tracking-wide mb-3">
                     Grammar used for FIRST / FOLLOW
                   </h3>
-                  <ol className="flex flex-wrap gap-x-6 gap-y-1.5 font-mono text-[13px] text-text">
-                    {result.factoring.grammar.productions.map((p) => (
-                      <li key={p.id} className="flex gap-2">
-                        <span className="text-text-dim w-5 text-right shrink-0">{p.id}.</span>
-                        {productionToString(p)}
+                  <ol className="flex flex-col gap-1.5 font-mono text-[13px] text-text">
+                    {productionsGroupedByLhs(result.factoring.grammar).map((p, i) => (
+                      <li key={p.lhs} className="flex gap-2">
+                        <span className="text-text-dim w-5 text-right shrink-0">{i + 1}.</span>
+                        {p.text}
                       </li>
                     ))}
                   </ol>
+                  <div className="mt-4 flex flex-wrap gap-4 text-xs text-text-muted">
+                    <span>
+                      Non-terminals:{' '}
+                      <span className="text-text font-mono">{result.factoring.grammar.nonTerminals.join(', ')}</span>
+                    </span>
+                    <span>
+                      Terminals:{' '}
+                      <span className="text-text font-mono">{result.factoring.grammar.terminals.join(', ')}</span>
+                    </span>
+                  </div>
                 </Card>
               )}
 
