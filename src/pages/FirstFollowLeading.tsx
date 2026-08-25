@@ -71,12 +71,6 @@ function buildReport(
     rows: factoring.grammar.nonTerminals.map((nt) => [nt, `{ ${(first.get(nt) ?? []).map((e) => e.symbol).join(', ')} }`]),
     monospace: true,
   })
-  r.subheading('Working')
-  for (const nt of factoring.grammar.nonTerminals) {
-    const entries = first.get(nt) ?? []
-    if (entries.length === 0) continue
-    r.bulletList(entries.map((e) => `FIRST(${nt}) contains "${e.symbol}" -- ${e.reasons.join('; ')}`))
-  }
 
   r.heading('Step 4: FOLLOW Sets')
   r.table({
@@ -84,12 +78,6 @@ function buildReport(
     rows: factoring.grammar.nonTerminals.map((nt) => [nt, `{ ${(follow.get(nt) ?? []).map((e) => e.symbol).join(', ')} }`]),
     monospace: true,
   })
-  r.subheading('Working')
-  for (const nt of factoring.grammar.nonTerminals) {
-    const entries = follow.get(nt) ?? []
-    if (entries.length === 0) continue
-    r.bulletList(entries.map((e) => `FOLLOW(${nt}) contains "${e.symbol}" -- ${e.reasons.join('; ')}`))
-  }
 
   r.heading('Discussion')
   r.paragraph(discussion)
