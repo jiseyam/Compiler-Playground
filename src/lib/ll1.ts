@@ -180,17 +180,73 @@ export function buildParseTree(grammar: Grammar, steps: ParseStep[]): ParseTreeN
   return root
 }
 
-/** ASCII outline (no box-drawing Unicode) so it renders correctly in a PDF's built-in fonts. */
-export function renderParseTreeLines(node: ParseTreeNode): string[] {
-  const lines: string[] = [node.symbol]
-  const walk = (n: ParseTreeNode, prefix: string) => {
-    n.children.forEach((child, i) => {
-      const isLast = i === n.children.length - 1
-      lines.push(prefix + (isLast ? '`-- ' : '+-- ') + child.symbol)
-      walk(child, prefix + (isLast ? '    ' : '|   '))
-    })
+interface PositionedNode {
+  node: ParseTreeNode
+  depth: number
+  x: number
+}
+
+function assignTreePositions(node: ParseTreeNode, depth: number, nextLeafX: { value: number }, out: PositionedNode[]): number {
+  if (node.children.length === 0) {
+    const x = nextLeafX.value++
+    out.push({ node, depth, x })
+    return x
   }
-  walk(node, '')
+  const childXs = node.children.map((c) => assignTreePositions(c, depth + 1, nextLeafX, out))
+  const x = childXs.reduce((a, b) => a + b, 0) / childXs.length
+  out.push({ node, depth, x })
+  return x
+}
+
+/**
+ * Centered textbook-style parse tree: every node at the same depth shares a
+ * row, with a /, |, \ connector row between each pair of levels pointing
+ * down toward each child's column.
+ */
+export function renderParseTreeCentered(root: ParseTreeNode): string[] {
+  const positions: PositionedNode[] = []
+  assignTreePositions(root, 0, { value: 0 }, positions)
+
+  const maxDepth = Math.max(...positions.map((p) => p.depth))
+  const byDepth: PositionedNode[][] = Array.from({ length: maxDepth + 1 }, () => [])
+  for (const p of positions) byDepth[p.depth].push(p)
+  for (const level of byDepth) level.sort((a, b) => a.x - b.x)
+
+  const labelWidth = Math.max(...positions.map((p) => p.node.symbol.length), 1)
+  const colWidth = labelWidth + 2
+  const margin = Math.ceil(labelWidth / 2) + 1
+  const col = (x: number) => Math.round(x * colWidth) + margin
+
+  const lineWidth = Math.max(...positions.map((p) => col(p.x) + labelWidth)) + 1
+  const blankLine = () => new Array<string>(lineWidth).fill(' ')
+
+  const lines: string[] = []
+
+  for (let depth = 0; depth <= maxDepth; depth++) {
+    const row = blankLine()
+    for (const p of byDepth[depth]) {
+      const c = col(p.x)
+      const start = Math.max(0, c - Math.floor(p.node.symbol.length / 2))
+      for (let i = 0; i < p.node.symbol.length && start + i < row.length; i++) {
+        row[start + i] = p.node.symbol[i]
+      }
+    }
+    lines.push(row.join('').replace(/\s+$/, ''))
+
+    if (depth === maxDepth) break
+
+    const connectorRow = blankLine()
+    for (const p of byDepth[depth]) {
+      const parentCol = col(p.x)
+      for (const child of p.node.children) {
+        const childPos = positions.find((q) => q.node === child)!
+        const c = col(childPos.x)
+        connectorRow[c] = c < parentCol ? '/' : c > parentCol ? '\\' : '|'
+      }
+    }
+    lines.push(connectorRow.join('').replace(/\s+$/, ''))
+  }
+
   return lines
 }
 

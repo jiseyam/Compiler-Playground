@@ -27,7 +27,7 @@ import {
   tokenizeInput,
   leftmostDerivationLines,
   buildParseTree,
-  renderParseTreeLines,
+  renderParseTreeCentered,
   type Ll1Table,
   type ParseResult,
 } from '@/lib/ll1'
@@ -165,7 +165,7 @@ function buildReport(
 
     r.heading('Parse Tree')
     const tree = buildParseTree(factoring.grammar, parse.steps)
-    r.codeBlock(renderParseTreeLines(tree))
+    r.codeBlock(renderParseTreeCentered(tree))
   }
 
   r.heading('Result')
@@ -405,7 +405,7 @@ export default function Ll1Parser() {
                       </div>
                       <div>
                         <h3 className="text-xs font-medium text-text-muted uppercase tracking-wide mb-3">Parse tree</h3>
-                        <ParseTreeView lines={renderParseTreeLines(buildParseTree(built.factoring.grammar, parse.steps))} />
+                        <ParseTreeView lines={renderParseTreeCentered(buildParseTree(built.factoring.grammar, parse.steps))} />
                       </div>
                     </>
                   )}

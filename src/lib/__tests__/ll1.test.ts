@@ -7,7 +7,7 @@ import {
   tokenizeInput,
   leftmostDerivationLines,
   buildParseTree,
-  renderParseTreeLines,
+  renderParseTreeCentered,
 } from '../ll1'
 
 const EXPR_GRAMMAR = `
@@ -124,8 +124,9 @@ describe('leftmostDerivationLines and buildParseTree', () => {
     collect(tree)
     expect(leaves).toEqual(tokens)
 
-    const lines = renderParseTreeLines(tree)
-    expect(lines[0]).toBe('S')
+    const lines = renderParseTreeCentered(tree)
+    expect(lines[0].trim()).toBe('S')
     expect(lines.some((l) => l.includes('A'))).toBe(true)
+    expect(lines.some((l) => /[/\\|]/.test(l))).toBe(true)
   })
 })
