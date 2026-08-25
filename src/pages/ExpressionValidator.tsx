@@ -7,8 +7,9 @@ import Card from '@/components/ui/Card'
 import ExportReportButton from '@/components/ui/ExportReportButton'
 import ExpressionHighlighter from '@/components/viz/ExpressionHighlighter'
 import PatternStepper from '@/components/viz/PatternStepper'
+import ErrorPanel from '@/components/ui/ErrorPanel'
 import { validateExpression } from '@/lib/expressionValidator'
-import { PATTERNS, runPattern } from '@/lib/patternMatcher'
+import { PATTERN_EXAMPLES, PatternError, compilePattern, runPattern } from '@/lib/patternMatcher'
 import { useDebounce } from '@/hooks/useDebounce'
 
 const TABS = [
@@ -90,11 +91,23 @@ function ExpressionTab() {
 }
 
 function PatternTab() {
-  const [patternId, setPatternId] = useState(PATTERNS[1].id)
+  const [patternText, setPatternText] = useState('a*b+')
   const [input, setInput] = useState('aaabb')
-  const debounced = useDebounce(input, 150)
-  const pattern = PATTERNS.find((p) => p.id === patternId)!
-  const result = useMemo(() => runPattern(pattern, debounced), [pattern, debounced])
+  const debouncedPattern = useDebounce(patternText, 150)
+  const debouncedInput = useDebounce(input, 150)
+
+  const compiled = useMemo(() => {
+    try {
+      return { pattern: compilePattern(debouncedPattern), error: null as string | null }
+    } catch (e) {
+      return { pattern: null, error: e instanceof PatternError ? e.message : 'Failed to compile pattern.' }
+    }
+  }, [debouncedPattern])
+
+  const result = useMemo(
+    () => (compiled.pattern ? runPattern(compiled.pattern, debouncedInput) : null),
+    [compiled.pattern, debouncedInput],
+  )
   const captureRef = useRef<HTMLDivElement>(null)
 
   return (
@@ -102,19 +115,31 @@ function PatternTab() {
       left={
         <div className="flex flex-col gap-4">
           <label className="text-xs font-medium text-text-muted uppercase tracking-wide">Pattern</label>
-          <div className="flex gap-2">
-            {PATTERNS.map((p) => (
+          <input
+            value={patternText}
+            onChange={(e) => setPatternText(e.target.value)}
+            spellCheck={false}
+            className="w-full rounded-xl border border-border bg-surface px-4 py-3 font-mono text-sm text-text outline-none focus:border-accent/50 transition-colors duration-150"
+            placeholder="e.g. a*b+ or (a|b)*abb"
+          />
+          <p className="text-xs text-text-dim -mt-2">
+            Supports literals, <code className="text-text">|</code> (or), <code className="text-text">*</code>{' '}
+            (zero+), <code className="text-text">+</code> (one+), <code className="text-text">?</code> (optional),
+            and <code className="text-text">(...)</code> grouping.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {PATTERN_EXAMPLES.map((p) => (
               <button
                 key={p.id}
-                onClick={() => setPatternId(p.id)}
-                className={`flex-1 rounded-lg border px-3 py-2.5 text-left transition-colors duration-150 ${
-                  patternId === p.id
-                    ? 'border-accent/40 bg-accent-soft text-text'
+                onClick={() => setPatternText(p.pattern)}
+                title={p.description}
+                className={`rounded-lg border px-3 py-1.5 text-xs font-mono transition-colors duration-150 ${
+                  patternText === p.pattern
+                    ? 'border-accent/40 bg-accent-soft text-accent'
                     : 'border-border bg-surface text-text-muted hover:bg-surface-hover'
                 }`}
               >
-                <div className="font-mono text-sm text-accent">{p.label}</div>
-                <div className="text-[11px] mt-0.5">{p.description}</div>
+                {p.label}
               </button>
             ))}
           </div>
@@ -127,27 +152,33 @@ function PatternTab() {
             className="w-full rounded-xl border border-border bg-surface px-4 py-3 font-mono text-sm text-text outline-none focus:border-accent/50 transition-colors duration-150"
             placeholder="e.g. aaabb"
           />
+
+          {compiled.error && <ErrorPanel message={compiled.error} />}
         </div>
       }
       right={
-        <div>
-          <div className="flex justify-end mb-4">
-            <ExportReportButton
-              moduleTitle="Pattern Recognizer"
-              category="Finite Automata"
-              problemStatement={`Match an input string against the pattern "${pattern.label}" step by step, showing the automaton state and consumed character at each step, ending in accept or reject.`}
-              inputGiven={`Pattern: ${pattern.label}\nInput: ${input}`}
-              discussionDefault={result.reason}
-              captureRef={captureRef}
-            />
+        compiled.pattern && result ? (
+          <div>
+            <div className="flex justify-end mb-4">
+              <ExportReportButton
+                moduleTitle="Pattern Recognizer"
+                category="Finite Automata"
+                problemStatement={`Match an input string against the pattern "${compiled.pattern.label}" step by step, showing the automaton state and consumed character at each step, ending in accept or reject.`}
+                inputGiven={`Pattern: ${compiled.pattern.label}\nInput: ${input}`}
+                discussionDefault={result.reason}
+                captureRef={captureRef}
+              />
+            </div>
+            <div ref={captureRef}>
+              <h3 className="text-xs font-medium text-text-muted uppercase tracking-wide mb-4">
+                State trace for "{compiled.pattern.label}"
+              </h3>
+              <PatternStepper result={result} />
+            </div>
           </div>
-          <div ref={captureRef}>
-            <h3 className="text-xs font-medium text-text-muted uppercase tracking-wide mb-4">
-              State trace for "{pattern.label}"
-            </h3>
-            <PatternStepper result={result} />
-          </div>
-        </div>
+        ) : (
+          <div className="text-sm text-text-dim">Fix the pattern to see the state trace.</div>
+        )
       }
     />
   )
