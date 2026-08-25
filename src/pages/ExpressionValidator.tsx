@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Sigma, Regex, CircleCheck, CircleX } from 'lucide-react'
 import PageShell from '@/components/layout/PageShell'
 import SplitPane from '@/components/layout/SplitPane'
@@ -8,14 +8,100 @@ import ExportReportButton from '@/components/ui/ExportReportButton'
 import ExpressionHighlighter from '@/components/viz/ExpressionHighlighter'
 import PatternStepper from '@/components/viz/PatternStepper'
 import ErrorPanel from '@/components/ui/ErrorPanel'
-import { validateExpression } from '@/lib/expressionValidator'
-import { PATTERN_EXAMPLES, PatternError, compilePattern, runPattern } from '@/lib/patternMatcher'
+import { validateExpression, type ValidationResult } from '@/lib/expressionValidator'
+import { PATTERN_EXAMPLES, PatternError, compilePattern, runPattern, type PatternDef, type MatchResult } from '@/lib/patternMatcher'
+import { ReportBuilder, pdfFilename } from '@/lib/pdfReport'
 import { useDebounce } from '@/hooks/useDebounce'
 
 const TABS = [
   { key: 'expression', label: 'Expression Validator' },
   { key: 'pattern', label: 'Pattern Recognizer' },
 ]
+
+function buildExpressionReport(expr: string, result: ValidationResult, discussion: string) {
+  const r = new ReportBuilder(
+    'Expression Validator',
+    'Balanced Parentheses and Operator Placement Check',
+    'Compiler Playground - Expression Validator',
+  )
+
+  r.heading('Given Expression')
+  r.codeBlock([expr])
+
+  if (result.tokens.length > 0) {
+    r.heading('Tokenization')
+    r.table({
+      head: ['#', 'Type', 'Value'],
+      rows: result.tokens.map((t, i) => [String(i + 1), t.type, t.value]),
+      monospace: true,
+      columnAlign: ['right', 'left', 'left'],
+    })
+  }
+
+  r.heading('Validation Rules Checked')
+  r.bulletList([
+    'Parentheses must be balanced: every "(" has a matching ")" and vice versa.',
+    'No two operators appear back to back (except a leading unary + or -).',
+    'No two operands (numbers/identifiers) appear back to back with no operator between them.',
+    'Parentheses may not be empty: "()" is rejected.',
+    'The expression may not end with a trailing operator.',
+    'Unary + and - are allowed at the start of the expression, right after "(", or right after another operator.',
+  ])
+
+  r.heading('Result')
+  r.resultBanner(result.valid, result.message)
+  if (!result.valid && result.errorIndex !== undefined) {
+    r.subheading('Error location')
+    r.codeBlock([expr, ' '.repeat(result.errorIndex) + '^-- here'])
+  }
+
+  r.heading('Discussion')
+  r.paragraph(discussion)
+
+  r.save(pdfFilename('Expression Validator'))
+}
+
+function buildPatternReport(pattern: PatternDef, input: string, result: MatchResult, discussion: string) {
+  const r = new ReportBuilder(
+    'Pattern Recognizer',
+    'Regex Compilation via Thompson Construction and DFA Simulation',
+    'Compiler Playground - Pattern Recognizer',
+  )
+
+  r.heading('Given Pattern and Input')
+  r.keyValue([
+    { label: 'Pattern', value: pattern.label },
+    { label: 'Input string', value: input || '(empty)' },
+  ])
+
+  r.heading('Compiled Automaton')
+  r.paragraph(pattern.description)
+  r.keyValue([
+    { label: 'States', value: String(pattern.states) },
+    { label: 'Accepting states', value: pattern.accepting.map((s) => `q${s}`).join(', ') || 'none' },
+  ])
+
+  r.heading('State Trace')
+  r.table({
+    head: ['Step', 'From', 'Symbol', 'To'],
+    rows: result.steps.map((s) => [
+      String(s.index),
+      `q${s.fromState}`,
+      s.char ?? '(start)',
+      s.toState === null ? 'dead' : `q${s.toState}`,
+    ]),
+    monospace: true,
+    columnAlign: ['right', 'left', 'center', 'left'],
+  })
+
+  r.heading('Result')
+  r.resultBanner(result.accepted, result.reason)
+
+  r.heading('Discussion')
+  r.paragraph(discussion)
+
+  r.save(pdfFilename('Pattern Recognizer'))
+}
 
 export default function ExpressionValidator({ defaultTab = 'expression' }: { defaultTab?: 'expression' | 'pattern' }) {
   const [tab, setTab] = useState<string>(defaultTab)
@@ -37,7 +123,6 @@ function ExpressionTab() {
   const [expr, setExpr] = useState('(3 + 4) * x2 - 1')
   const debounced = useDebounce(expr, 150)
   const result = useMemo(() => validateExpression(debounced), [debounced])
-  const captureRef = useRef<HTMLDivElement>(null)
 
   return (
     <SplitPane
@@ -67,10 +152,10 @@ function ExpressionTab() {
               problemStatement="Validate a math expression for balanced parentheses and correct operator placement, pinpointing the exact character where validation fails."
               inputGiven={expr}
               discussionDefault={result.message}
-              captureRef={captureRef}
+              onExport={(discussion) => buildExpressionReport(expr, result, discussion)}
             />
           </div>
-          <div ref={captureRef} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
             <Card className="p-4">
               <h3 className="text-xs font-medium text-text-muted uppercase tracking-wide mb-3">Expression</h3>
               <ExpressionHighlighter expr={expr} errorIndex={result.errorIndex} />
@@ -108,7 +193,6 @@ function PatternTab() {
     () => (compiled.pattern ? runPattern(compiled.pattern, debouncedInput) : null),
     [compiled.pattern, debouncedInput],
   )
-  const captureRef = useRef<HTMLDivElement>(null)
 
   return (
     <SplitPane
@@ -166,10 +250,10 @@ function PatternTab() {
                 problemStatement={`Match an input string against the pattern "${compiled.pattern.label}" step by step, showing the automaton state and consumed character at each step, ending in accept or reject.`}
                 inputGiven={`Pattern: ${compiled.pattern.label}\nInput: ${input}`}
                 discussionDefault={result.reason}
-                captureRef={captureRef}
+                onExport={(discussion) => buildPatternReport(compiled.pattern!, input, result, discussion)}
               />
             </div>
-            <div ref={captureRef}>
+            <div>
               <h3 className="text-xs font-medium text-text-muted uppercase tracking-wide mb-4">
                 State trace for "{compiled.pattern.label}"
               </h3>

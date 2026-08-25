@@ -149,4 +149,70 @@ export function runPredictiveParse(grammar: Grammar, table: Ll1Table, inputToken
   }
 }
 
+export interface ParseTreeNode {
+  symbol: string
+  children: ParseTreeNode[]
+}
+
+/** Reconstructs the parse tree by replaying the parser's own stack discipline with tree nodes instead of bare symbols. */
+export function buildParseTree(grammar: Grammar, steps: ParseStep[]): ParseTreeNode {
+  const root: ParseTreeNode = { symbol: grammar.start, children: [] }
+  const stack: ParseTreeNode[] = [root]
+
+  for (const step of steps) {
+    if (step.action.kind === 'apply') {
+      const node = stack.pop()
+      if (!node) continue
+      const { production } = step.action
+      const isEpsilon = production.rhs.length === 1 && production.rhs[0] === EPSILON
+      const children: ParseTreeNode[] = isEpsilon
+        ? [{ symbol: EPSILON, children: [] }]
+        : production.rhs.map((s) => ({ symbol: s, children: [] }))
+      node.children = children
+      if (!isEpsilon) {
+        for (let i = children.length - 1; i >= 0; i--) stack.push(children[i])
+      }
+    } else if (step.action.kind === 'match') {
+      stack.pop()
+    }
+  }
+
+  return root
+}
+
+/** ASCII outline (no box-drawing Unicode) so it renders correctly in a PDF's built-in fonts. */
+export function renderParseTreeLines(node: ParseTreeNode): string[] {
+  const lines: string[] = [node.symbol]
+  const walk = (n: ParseTreeNode, prefix: string) => {
+    n.children.forEach((child, i) => {
+      const isLast = i === n.children.length - 1
+      lines.push(prefix + (isLast ? '`-- ' : '+-- ') + child.symbol)
+      walk(child, prefix + (isLast ? '    ' : '|   '))
+    })
+  }
+  walk(node, '')
+  return lines
+}
+
+/**
+ * One sentential form per production applied, in leftmost-derivation order.
+ * At each 'apply' step, the next step's stack (top-to-bottom, excluding the
+ * bottom $) is exactly the still-to-derive suffix; prepending the input
+ * tokens already matched gives the full sentential form.
+ */
+export function leftmostDerivationLines(inputTokens: string[], steps: ParseStep[]): string[] {
+  const lines: string[] = []
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i]
+    if (step.action.kind !== 'apply') continue
+    const next = steps[i + 1]
+    if (!next) continue
+    const matchedCount = inputTokens.length - (step.input.length - 1)
+    const matchedPrefix = inputTokens.slice(0, matchedCount)
+    const remaining = [...next.stack].slice(1).reverse()
+    lines.push([...matchedPrefix, ...remaining].join(' ') || EPSILON)
+  }
+  return lines
+}
+
 export { productionToString }

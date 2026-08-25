@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Table2, Play, Pause, SkipBack, SkipForward, RotateCcw, AlertTriangle } from 'lucide-react'
 import PageShell from '@/components/layout/PageShell'
 import SplitPane from '@/components/layout/SplitPane'
@@ -9,9 +9,19 @@ import ErrorPanel from '@/components/ui/ErrorPanel'
 import ExportReportButton from '@/components/ui/ExportReportButton'
 import ParseTable from '@/components/viz/ParseTable'
 import StackAnimator from '@/components/viz/StackAnimator'
-import { parseGrammar, GrammarError } from '@/lib/grammar'
+import { parseGrammar, GrammarError, productionsGroupedByLhs, productionToString, END_MARKER, type Grammar } from '@/lib/grammar'
 import { computeFirst, computeFollow } from '@/lib/firstFollowLeading'
-import { buildLl1Table, runPredictiveParse, tokenizeInput } from '@/lib/ll1'
+import {
+  buildLl1Table,
+  runPredictiveParse,
+  tokenizeInput,
+  leftmostDerivationLines,
+  buildParseTree,
+  renderParseTreeLines,
+  type Ll1Table,
+  type ParseResult,
+} from '@/lib/ll1'
+import { ReportBuilder, pdfFilename } from '@/lib/pdfReport'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useLl1Store } from '@/store/ll1Store'
 
@@ -20,6 +30,98 @@ E' -> + T E' | #
 T -> F T'
 T' -> * F T' | #
 F -> ( E ) | id`
+
+function buildReport(grammar: Grammar, table: Ll1Table, inputTokens: string[], parse: ParseResult, discussion: string) {
+  const r = new ReportBuilder(
+    'LL(1) Parser',
+    'Predictive Parsing Table, Stack Simulation, and Leftmost Derivation',
+    'Compiler Playground - LL(1) Parser',
+  )
+
+  r.heading('Given Grammar')
+  r.codeBlock(productionsGroupedByLhs(grammar).map((p) => p.text))
+  r.keyValue([
+    { label: 'Non-terminals', value: grammar.nonTerminals.join(', ') },
+    { label: 'Terminals', value: grammar.terminals.join(', ') },
+    { label: 'Start symbol', value: grammar.start },
+  ])
+
+  r.heading('Predictive Parsing Table')
+  r.table({
+    head: ['', ...table.cols],
+    rows: table.rows.map((nt) => [
+      nt,
+      ...table.cols.map((t) => {
+        const prods = table.cells.get(nt)?.get(t) ?? []
+        return prods.map((p) => productionToString(p)).join('  |  ')
+      }),
+    ]),
+    monospace: true,
+  })
+
+  if (table.conflicts.length > 0) {
+    r.subheading('Conflicts')
+    r.bulletList(
+      table.conflicts.map(
+        (c) =>
+          `M[${c.nonTerminal}, ${c.terminal}] is claimed by ${c.productions.length} productions: ${c.productions
+            .map((p) => productionToString(p))
+            .join('  |  ')} -- the grammar is not LL(1) as given (likely needs left-factoring or left-recursion removal).`,
+      ),
+    )
+  } else {
+    r.paragraph('No cell of the table contains more than one production. The grammar is LL(1) and can be parsed without backtracking.')
+  }
+
+  r.heading('Stack Implementation')
+  r.paragraph(
+    `Input string: ${inputTokens.join(' ')} ${END_MARKER}. The stack is written with the bottom on the left and the top on the right; ${END_MARKER} marks the bottom of the stack and the end of input.`,
+  )
+  r.table({
+    head: ['Stack', 'Input', 'Action'],
+    rows: parse.steps.map((s) => [
+      s.stack.join(' '),
+      s.input.join(' '),
+      s.action.kind === 'match'
+        ? `match ${s.action.symbol}`
+        : s.action.kind === 'apply'
+          ? productionToString(s.action.production)
+          : s.action.kind === 'accept'
+            ? 'Accept'
+            : s.action.message,
+    ]),
+    monospace: true,
+  })
+
+  const applySteps = parse.steps.filter((s) => s.action.kind === 'apply')
+  if (applySteps.length > 0) {
+    r.heading('Output (Sequence of Productions)')
+    r.paragraph('The parser produces the following output, which is the list of productions used during parsing:')
+    r.codeBlock(
+      applySteps.map((s) => (s.action.kind === 'apply' ? productionToString(s.action.production) : '')),
+    )
+  }
+
+  if (parse.accepted) {
+    const derivation = leftmostDerivationLines(inputTokens, parse.steps)
+    if (derivation.length > 0) {
+      r.heading('Leftmost Derivation')
+      r.codeBlock([grammar.start, ...derivation.map((line) => `=> ${line}`)])
+    }
+
+    r.heading('Parse Tree')
+    const tree = buildParseTree(grammar, parse.steps)
+    r.codeBlock(renderParseTreeLines(tree))
+  }
+
+  r.heading('Result')
+  r.resultBanner(parse.accepted, parse.accepted ? 'The input string is accepted by the grammar.' : parse.error ?? 'The input string was rejected.')
+
+  r.heading('Discussion')
+  r.paragraph(discussion)
+
+  r.save(pdfFilename('LL1 Parser'))
+}
 
 export default function Ll1Parser() {
   const [source, setSource] = useState(SAMPLE_GRAMMAR)
@@ -71,8 +173,6 @@ export default function Ll1Parser() {
       ? { nt: currentStep.action.production.lhs, terminal: currentStep.input[0] }
       : null
 
-  const captureRef = useRef<HTMLDivElement>(null)
-
   return (
     <PageShell
       title="LL(1) Parser"
@@ -92,7 +192,11 @@ export default function Ll1Parser() {
                 : `Parsing failed: ${parse.error}`
               : 'Enter an input string to generate a discussion summary.'
           }
-          captureRef={captureRef}
+          onExport={(discussion) => {
+            if (built.grammar && built.table && parse) {
+              buildReport(built.grammar, built.table, tokenizeInput(input), parse, discussion)
+            }
+          }}
         />
       }
     >
@@ -129,7 +233,7 @@ export default function Ll1Parser() {
           </div>
         }
         right={
-          <div ref={captureRef} className="flex flex-col gap-5">
+          <div className="flex flex-col gap-5">
             <div>
               <label className="text-xs font-medium text-text-muted uppercase tracking-wide">
                 Input string (space-separated terminals)

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ScanText } from 'lucide-react'
 import PageShell from '@/components/layout/PageShell'
 import SplitPane from '@/components/layout/SplitPane'
@@ -7,8 +7,53 @@ import Card from '@/components/ui/Card'
 import ExportReportButton from '@/components/ui/ExportReportButton'
 import { Table, THead, TRow, TH, TD } from '@/components/ui/Table'
 import TokenChip from '@/components/viz/TokenChip'
-import { tokenize, summarize } from '@/lib/lexer'
+import { tokenize, summarize, type Token, type LexerSummary } from '@/lib/lexer'
+import { ReportBuilder, pdfFilename } from '@/lib/pdfReport'
 import { useDebounce } from '@/hooks/useDebounce'
+
+function buildReport(source: string, codeTokens: Token[], commentTokens: Token[], summary: LexerSummary, discussion: string) {
+  const r = new ReportBuilder(
+    'Lexical Analyzer',
+    'Token Classification and Symbol Table',
+    'Compiler Playground - Lexical Analyzer',
+  )
+
+  r.heading('Given Source Code')
+  r.codeBlock(source.split('\n'))
+
+  r.heading('Token Stream')
+  r.paragraph(`The scanner classified ${codeTokens.length} token(s), stripping ${commentTokens.length} comment block(s) before analysis.`)
+  r.table({
+    head: ['#', 'Type', 'Lexeme', 'Line'],
+    rows: codeTokens.map((t, i) => [String(i + 1), t.type, t.value, String(t.line)]),
+    monospace: true,
+    columnAlign: ['right', 'left', 'left', 'right'],
+  })
+
+  if (commentTokens.length > 0) {
+    r.heading('Comments Stripped')
+    r.codeBlock(commentTokens.map((t) => t.value))
+  }
+
+  r.heading('Summary')
+  const rows: [string, string[]][] = [
+    ['Keywords', summary.keywords],
+    ['Identifiers (variables)', summary.identifiers],
+    ['Constants (numbers)', summary.numbers],
+    ['Constants (strings)', summary.strings],
+    ['Operators', summary.operators],
+    ['Special symbols', summary.specials],
+  ]
+  r.table({
+    head: ['Category', 'Count', 'Values'],
+    rows: rows.map(([label, values]) => [label, String(values.length), values.length ? values.join(', ') : '-']),
+  })
+
+  r.heading('Discussion')
+  r.paragraph(discussion)
+
+  r.save(pdfFilename('Lexical Analyzer'))
+}
 
 const SAMPLE = `// Sample program
 int main() {
@@ -41,7 +86,6 @@ export default function Lexer() {
   const summary = useMemo(() => summarize(tokens), [tokens])
   const codeTokens = tokens.filter((t) => t.type !== 'comment')
   const commentTokens = tokens.filter((t) => t.type === 'comment')
-  const captureRef = useRef<HTMLDivElement>(null)
 
   return (
     <PageShell
@@ -56,7 +100,7 @@ export default function Lexer() {
           problemStatement="Write a lexical analyzer that scans source code and classifies each token into keywords, identifiers, constants, operators, and special symbols, stripping comments in the process."
           inputGiven={source}
           discussionDefault={`The analyzer found ${codeTokens.length} tokens (${summary.keywords.length} keywords, ${summary.identifiers.length} identifiers, ${summary.numbers.length + summary.strings.length} constants, ${summary.operators.length} operators, ${summary.specials.length} special symbols) and stripped ${commentTokens.length} comment block(s).`}
-          captureRef={captureRef}
+          onExport={(discussion) => buildReport(source, codeTokens, commentTokens, summary, discussion)}
         />
       }
     >
@@ -77,7 +121,7 @@ export default function Lexer() {
           </div>
         }
         right={
-          <div ref={captureRef} className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6">
             <Card className="p-4">
               <h3 className="text-xs font-medium text-text-muted uppercase tracking-wide mb-3">
                 Token stream ({codeTokens.length})

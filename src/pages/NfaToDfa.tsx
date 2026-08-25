@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { GitBranch } from 'lucide-react'
 import PageShell from '@/components/layout/PageShell'
 import SplitPane from '@/components/layout/SplitPane'
@@ -6,9 +6,54 @@ import ErrorPanel from '@/components/ui/ErrorPanel'
 import ExportReportButton from '@/components/ui/ExportReportButton'
 import { Table, THead, TRow, TH, TD } from '@/components/ui/Table'
 import GraphCanvas from '@/components/viz/GraphCanvas'
-import { parseNfaDsl, subsetConstruction, NfaError, NFA_EPSILON } from '@/lib/nfaToDfa'
+import { parseNfaDsl, subsetConstruction, NfaError, NFA_EPSILON, type NfaDef, type DfaResult } from '@/lib/nfaToDfa'
 import { NFA_PRESETS } from '@/lib/nfaPresets'
+import { ReportBuilder, pdfFilename } from '@/lib/pdfReport'
 import { useDebounce } from '@/hooks/useDebounce'
+
+function buildReport(nfa: NfaDef, dfa: DfaResult, discussion: string) {
+  const r = new ReportBuilder('NFA to DFA Converter', 'Subset Construction', 'Compiler Playground - NFA to DFA Converter')
+
+  r.heading('Given NFA')
+  r.keyValue([
+    { label: 'States', value: nfa.states.join(', ') },
+    { label: 'Alphabet', value: nfa.alphabet.join(', ') },
+    { label: 'Start state', value: nfa.start },
+    { label: 'Accepting states', value: nfa.accepting.join(', ') },
+  ])
+  r.subheading('Transitions')
+  r.codeBlock(nfa.transitions.map((t) => `${t.from}  ${t.symbol}  ${t.to.join(' ')}`))
+
+  r.heading('Subset Construction Steps')
+  r.bulletList(dfa.steps.map((s) => s.description))
+
+  r.heading('Resulting DFA')
+  r.paragraph(`Subset construction produced ${dfa.states.length} DFA state(s) from ${nfa.states.length} NFA state(s).`)
+  r.table({
+    head: ['DFA state', 'NFA states', 'Accepting'],
+    rows: dfa.states.map((s) => [s.id === dfa.start ? `${s.id} (start)` : s.id, `{ ${s.nfaStates.join(', ')} }`, s.accepting ? 'yes' : 'no']),
+    monospace: true,
+  })
+
+  r.heading('DFA Transition Table')
+  r.table({
+    head: ['State', ...nfa.alphabet, 'Accepting'],
+    rows: dfa.states.map((s) => [
+      `{${s.id}}`,
+      ...nfa.alphabet.map((a) => {
+        const to = dfa.transitions.find((t) => t.from === s.id && t.symbol === a)?.to
+        return to ? `{${to}}` : '-'
+      }),
+      s.accepting ? 'yes' : 'no',
+    ]),
+    monospace: true,
+  })
+
+  r.heading('Discussion')
+  r.paragraph(discussion)
+
+  r.save(pdfFilename('NFA to DFA Converter'))
+}
 
 export default function NfaToDfa() {
   const [presetId, setPresetId] = useState(NFA_PRESETS[0].id)
@@ -34,8 +79,6 @@ export default function NfaToDfa() {
     }
   }, [debounced])
 
-  const captureRef = useRef<HTMLDivElement>(null)
-
   return (
     <PageShell
       title="NFA → DFA Converter"
@@ -53,7 +96,9 @@ export default function NfaToDfa() {
               ? `Subset construction produced ${built.dfa.states.length} DFA state(s) from ${built.nfa!.states.length} NFA state(s) in ${built.dfa.steps.length} steps.`
               : 'Fix the NFA definition to generate a discussion summary.'
           }
-          captureRef={captureRef}
+          onExport={(discussion) => {
+            if (built.nfa && built.dfa) buildReport(built.nfa, built.dfa, discussion)
+          }}
         />
       }
     >
@@ -105,7 +150,7 @@ export default function NfaToDfa() {
         }
         right={
           built.nfa && built.dfa ? (
-            <div ref={captureRef} className="flex flex-col gap-8">
+            <div className="flex flex-col gap-8">
               <div>
                 <h3 className="text-xs font-medium text-text-muted uppercase tracking-wide mb-3">NFA</h3>
                 <GraphCanvas
